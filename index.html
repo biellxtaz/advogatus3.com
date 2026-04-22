@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LexDesk — Gestão Jurídica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0B1220;
+    --sidebar: #070D18;
+    --card: #111B2E;
+    --card2: #162033;
+    --border: rgba(180,160,100,0.13);
+    --border2: rgba(180,160,100,0.22);
+    --gold: #C9A455;
+    --gold2: #E0BF7A;
+    --text: #E8E0D0;
+    --text2: #8A8A9A;
+    --text3: #5A5A6A;
+    --success: #2DBE7A;
+    --warning: #E6A030;
+    --danger: #E05050;
+    --info: #4DA8E0;
+    --purple: #9B7FE8;
+    --teal: #3DCFB0;
+    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --font-sans: 'DM Sans', system-ui, sans-serif;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --sidebar-w: 240px;
+    --topbar-h: 62px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: var(--font-sans); background: var(--bg); color: var(--text); font-size: 14px; overflow: hidden; }
+  a { color: inherit; text-decoration: none; }
+  button { cursor: pointer; border: none; background: none; font-family: var(--font-sans); color: var(--text); }
+  input, select, textarea { font-family: var(--font-sans); background: var(--card2); border: 1px solid var(--border2); color: var(--text); border-radius: var(--radius); padding: 9px 14px; font-size: 13px; outline: none; transition: border-color .2s; width: 100%; }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+  select option { background: var(--card); }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+
+  /* ===== LAYOUT ===== */
+  #app { display: flex; height: 100vh; }
+  #sidebar {
+    width: var(--sidebar-w); min-width: var(--sidebar-w);
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 0;
+    z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 22px 22px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 34px; height: 34px; background: var(--gold);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 18px; height: 18px; fill: var(--sidebar); }
+  .logo-text { font-family: var(--font-serif); font-size: 20px; font-weight: 700; color: var(--gold); letter-spacing: 0.5px; }
+  .logo-sub { font-size: 10px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 1px; }
+
+  .sidebar-section { padding: 14px 12px 4px; font-size: 10px; letter-spacing: 1.5px; color: var(--text3); text-transform: uppercase; }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px 14px; margin: 1px 8px;
+    border-radius: var(--radius); cursor: pointer;
+    color: var(--text2); font-size: 13.5px; font-weight: 400;
+    transition: all .18s; position: relative; user-select: none;
+  }
+  .nav-item:hover { background: rgba(201,164,85,.07); color: var(--text); }
+  .nav-item.active { background: rgba(201,164,85,.13); color: var(--gold2); }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 18px; background: var(--gold); border-radius: 0 3px 3px 0;
+  }
+  .nav-icon { width: 17px; height: 17px; opacity: .75; flex-shrink: 0; }
+  .nav-item.active .nav-icon { opacity: 1; }
+  .nav-badge {
+    margin-left: auto; background: var(--danger); color: #fff;
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px;
+  }
+  .sidebar-bottom {
+    margin-top: auto; padding: 14px 12px;
+    border-top: 1px solid var(--border);
+  }
+  .user-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: var(--radius);
+    cursor: pointer; transition: background .18s;
+  }
+  .user-card:hover { background: rgba(255,255,255,.04); }
+  .user-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, #C9A455, #8B6A20);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif); font-weight: 700; font-size: 14px; color: var(--sidebar);
+    flex-shrink: 0;
+  }
+  .user-name { font-size: 13px; font-weight: 500; }
+  .user-role { font-size: 11px; color: var(--text3); }
+
+  /* ===== MAIN ===== */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+  #topbar {
+    height: var(--topbar-h); min-height: var(--topbar-h);
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 28px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(11,18,32,.8); backdrop-filter: blur(12px);
+    z-index: 50;
+  }
+  .topbar-title { font-family: var(--font-serif); font-size: 21px; font-weight: 600; color: var(--text); }
+  .topbar-subtitle { font-size: 12px; color: var(--text2); margin-top: 1px; }
+  .topbar-search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 8px 14px;
+    color: var(--text2); font-size: 13px; cursor: text;
+    margin-left: auto; min-width: 220px;
+    transition: border-color .2s;
+  }
+  .topbar-search:hover { border-color: var(--border2); }
+  .topbar-search input { background: none; border: none; padding: 0; font-size: 13px; color: var(--text); width: 100%; }
+  .topbar-search input::placeholder { color: var(--text3); }
+  .topbar-btn {
+    width: 36px; height: 36px; border-radius: var(--radius);
+    background: var(--card2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    transition: all .18s; position: relative;
+  }
+  .topbar-btn:hover { border-color: var(--border2); background: var(--card); }
+  .notif-dot {
+    position: absolute; top: 6px; right: 6px;
+    width: 7px; height: 7px; border-radius: 50%; background: var(--danger);
+    border: 1.5px solid var(--bg);
+  }
+
+  /* ===== CONTENT ===== */
+  #content { flex: 1; overflow-y: auto; padding: 28px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 20px;
+  }
+  .card-sm { padding: 16px; border-radius: var(--radius); }
+
+  /* ===== KPI GRID ===== */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 18px 20px;
+    position: relative; overflow: hidden;
+  }
+  .kpi-card::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .kpi-card.gold::after { background: linear-gradient(90deg, var(--gold), transparent); }
+  .kpi-card.green::after { background: linear-gradient(90deg, var(--success), transparent); }
+  .kpi-card.blue::after { background: linear-gradient(90deg, var(--info), transparent); }
+  .kpi-card.red::after { background: linear-gradient(90deg, var(--danger), transparent); }
+  .kpi-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+  .kpi-value { font-family: var(--font-serif); font-size: 32px; font-weight: 600; color: var(--text); line-height: 1; }
+  .kpi-change { font-size: 12px; color: var(--text2); margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+  .kpi-change .up { color: var(--success); }
+  .kpi-change .down { color: var(--danger); }
+  .kpi-icon {
+    position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+    width: 42px; height: 42px; border-radius: 10px; opacity: .12;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .kpi-icon svg { width: 26px; height: 26px; }
+
+  /* ===== GRIDS ===== */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .col-span-2 { grid-column: span 2; }
+
+  /* ===== SECTION HEADER ===== */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-family: var(--font-serif); font-size: 17px; font-weight: 600; }
+  .section-action {
+    font-size: 12px; color: var(--gold); background: rgba(201,164,85,.1);
+    border: 1px solid rgba(201,164,85,.25); border-radius: 6px;
+    padding: 6px 14px; cursor: pointer; transition: all .18s; font-family: var(--font-sans);
+  }
+  .section-action:hover { background: rgba(201,164,85,.2); }
+
+  /* ===== TABLE ===== */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; font-size: 11px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text3); font-weight: 500;
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 13px 14px; border-bottom: 1px solid var(--border);
+    font-size: 13.5px; color: var(--text);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.025); }
+
+  /* ===== BADGES ===== */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 500; letter-spacing: .3px;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge.ativo { background: rgba(45,190,122,.12); color: var(--success); border: 1px solid rgba(45,190,122,.25); }
+  .badge.aguardando { background: rgba(230,160,48,.12); color: var(--warning); border: 1px solid rgba(230,160,48,.25); }
+  .badge.encerrado { background: rgba(90,90,106,.12); color: var(--text3); border: 1px solid rgba(90,90,106,.2); }
+  .badge.urgente { background: rgba(224,80,80,.12); color: var(--danger); border: 1px solid rgba(224,80,80,.25); }
+  .badge.alta { background: rgba(224,80,80,.1); color: var(--danger); border: 1px solid rgba(224,80,80,.2); }
+  .badge.media { background: rgba(230,160,48,.1); color: var(--warning); border: 1px solid rgba(230,160,48,.2); }
+  .badge.baixa { background: rgba(45,190,122,.1); color: var(--success); border: 1px solid rgba(45,190,122,.2); }
+  .badge.civel { background: rgba(77,168,224,.1); color: var(--info); border: 1px solid rgba(77,168,224,.2); }
+  .badge.trabalhista { background: rgba(155,127,232,.1); color: var(--purple); border: 1px solid rgba(155,127,232,.2); }
+  .badge.criminal { background: rgba(224,80,80,.1); color: var(--danger); border: 1px solid rgba(224,80,80,.2); }
+  .badge.tributario { background: rgba(61,207,176,.1); color: var(--teal); border: 1px solid rgba(61,207,176,.2); }
+  .badge.familia { background: rgba(230,160,48,.1); color: var(--warning); border: 1px solid rgba(230,160,48,.2); }
+  .badge.pago { background: rgba(45,190,122,.12); color: var(--success); border: 1px solid rgba(45,190,122,.25); }
+  .badge.pendente { background: rgba(230,160,48,.12); color: var(--warning); border: 1px solid rgba(230,160,48,.25); }
+  .badge.atrasado { background: rgba(224,80,80,.12); color: var(--danger); border: 1px solid rgba(224,80,80,.25); }
+  .badge.concluida { background: rgba(45,190,122,.12); color: var(--success); border: 1px solid rgba(45,190,122,.25); }
+  .badge.andamento { background: rgba(77,168,224,.12); color: var(--info); border: 1px solid rgba(77,168,224,.25); }
+  .badge.fazer { background: rgba(90,90,106,.1); color: var(--text2); border: 1px solid rgba(90,90,106,.2); }
+
+  /* ===== PRIORITY INDICATOR ===== */
+  .priority-bar { width: 3px; height: 28px; border-radius: 2px; flex-shrink: 0; }
+  .priority-bar.alta { background: var(--danger); }
+  .priority-bar.media { background: var(--warning); }
+  .priority-bar.baixa { background: var(--success); }
+
+  /* ===== PROGRESS ===== */
+  .progress-bar { height: 5px; background: var(--card2); border-radius: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--gold), var(--gold2)); }
+
+  /* ===== AVATAR ===== */
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif); font-weight: 600; font-size: 13px;
+  }
+
+  /* ===== ACTIVITY ===== */
+  .activity-list { display: flex; flex-direction: column; gap: 0; }
+  .activity-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-dot {
+    width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
+  }
+  .activity-text { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .activity-text strong { color: var(--text); font-weight: 500; }
+  .activity-time { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* ===== DEADLINE LIST ===== */
+  .deadline-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 0; border-bottom: 1px solid var(--border);
+  }
+  .deadline-item:last-child { border-bottom: none; }
+  .deadline-date {
+    width: 44px; text-align: center; flex-shrink: 0;
+  }
+  .deadline-day { font-family: var(--font-serif); font-size: 22px; font-weight: 700; line-height: 1; }
+  .deadline-month { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); }
+  .deadline-info { flex: 1; min-width: 0; }
+  .deadline-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .deadline-case { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .deadline-urgency { width: 4px; height: 36px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ===== KANBAN ===== */
+  .kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .kanban-col {
+    background: var(--card2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 16px; min-height: 400px;
+  }
+  .kanban-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .kanban-title { font-size: 13px; font-weight: 600; flex: 1; }
+  .kanban-count {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--text2);
+  }
+  .task-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 13px 14px;
+    margin-bottom: 10px; cursor: pointer; transition: all .18s;
+    position: relative;
+  }
+  .task-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+  .task-card-title { font-size: 13px; font-weight: 500; margin-bottom: 7px; line-height: 1.4; }
+  .task-card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .task-card-case { font-size: 11px; color: var(--text3); }
+  .task-card-due { font-size: 11px; color: var(--text2); margin-left: auto; }
+  .task-card-due.overdue { color: var(--danger); }
+  .task-card-top { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+
+  /* ===== CLIENTES ===== */
+  .client-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 20px;
+    transition: all .2s; cursor: pointer;
+  }
+  .client-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .client-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .client-name { font-size: 15px; font-weight: 600; }
+  .client-type { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .client-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .client-stat { background: var(--card2); border-radius: 8px; padding: 10px 12px; }
+  .client-stat-label { font-size: 10px; color: var(--text3); letter-spacing: .8px; text-transform: uppercase; }
+  .client-stat-value { font-family: var(--font-serif); font-size: 20px; font-weight: 600; margin-top: 2px; }
+  .client-contact { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+
+  /* ===== CALENDAR ===== */
+  .cal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .cal-nav { display: flex; gap: 6px; }
+  .cal-nav-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--card2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all .18s;
+  }
+  .cal-nav-btn:hover { border-color: var(--border2); }
+  .cal-month { font-family: var(--font-serif); font-size: 22px; font-weight: 600; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; }
+  .cal-day-name {
+    text-align: center; font-size: 11px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text3); padding: 8px 0; font-weight: 500;
+  }
+  .cal-day {
+    min-height: 90px; border: 1px solid var(--border); padding: 8px;
+    cursor: pointer; transition: background .15s; position: relative;
+  }
+  .cal-day:hover { background: rgba(201,164,85,.04); }
+  .cal-day.today { border-color: var(--gold); }
+  .cal-day.other-month { opacity: .35; }
+  .cal-day-num {
+    font-size: 12px; font-weight: 500; margin-bottom: 4px;
+    width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%;
+  }
+  .cal-day.today .cal-day-num { background: var(--gold); color: var(--sidebar); }
+  .cal-event {
+    font-size: 10.5px; padding: 2px 6px; border-radius: 4px;
+    margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .cal-event.audiencia { background: rgba(224,80,80,.18); color: #f08080; }
+  .cal-event.reuniao { background: rgba(77,168,224,.15); color: var(--info); }
+  .cal-event.prazo { background: rgba(230,160,48,.15); color: var(--warning); }
+  .cal-event.outros { background: rgba(155,127,232,.15); color: var(--purple); }
+
+  /* ===== FINANCEIRO ===== */
+  .fin-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .fin-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 18px;
+  }
+  .fin-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); }
+  .fin-value { font-family: var(--font-serif); font-size: 26px; font-weight: 600; margin: 6px 0 4px; }
+  .fin-sub { font-size: 11px; color: var(--text2); }
+
+  /* ===== DOCUMENTOS ===== */
+  .doc-folder {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 13px 16px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 8px; cursor: pointer; transition: all .18s;
+  }
+  .doc-folder:hover { border-color: var(--border2); }
+  .doc-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .doc-name { font-size: 13.5px; font-weight: 500; }
+  .doc-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .doc-size { margin-left: auto; font-size: 11px; color: var(--text3); }
+
+  /* ===== MODAL ===== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.7); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card); border: 1px solid var(--border2);
+    border-radius: var(--radius-lg); padding: 28px;
+    width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+  }
+  .modal-title { font-family: var(--font-serif); font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .form-label { font-size: 11px; letter-spacing: .8px; text-transform: uppercase; color: var(--text3); }
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .btn {
+    padding: 9px 20px; border-radius: var(--radius); font-size: 13.5px;
+    font-family: var(--font-sans); font-weight: 500; cursor: pointer; transition: all .18s;
+  }
+  .btn-primary { background: var(--gold); color: var(--sidebar); border: none; }
+  .btn-primary:hover { background: var(--gold2); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+  .btn-ghost:hover { background: var(--card2); color: var(--text); }
+
+  /* ===== SEARCH FILTER BAR ===== */
+  .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .filter-search { flex: 1; min-width: 200px; display: flex; align-items: center; gap: 8px; background: var(--card2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0 12px; }
+  .filter-search input { border: none; background: none; padding: 9px 0; flex: 1; }
+  .filter-select { width: auto; min-width: 140px; }
+
+  /* ===== TOAST ===== */
+  #toast {
+    position: fixed; bottom: 28px; right: 28px;
+    background: var(--card); border: 1px solid var(--gold);
+    border-radius: var(--radius); padding: 13px 18px;
+    font-size: 13px; color: var(--text);
+    display: none; z-index: 999;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    max-width: 300px;
+  }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state { text-align: center; padding: 48px 0; color: var(--text3); }
+  .empty-state-icon { font-size: 40px; margin-bottom: 12px; opacity: .5; }
+
+  /* ===== TOOLTIP-LIKE ===== */
+  .tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--card2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 3px 9px; font-size: 11px; color: var(--text2);
+  }
+
+  /* ===== CHART AREA ===== */
+  .chart-container { position: relative; height: 220px; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 900px) {
+    .kpi-grid, .fin-summary { grid-template-columns: repeat(2, 1fr); }
+    .grid-2, .kanban-board { grid-template-columns: 1fr; }
+    .col-span-2 { grid-column: span 1; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L3 7v10l9 5 9-5V7L12 2zm0 2.2l7 3.9v8.8l-7 3.9-7-3.9V8.1l7-3.9z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-text">LexDesk</div>
+        <div class="logo-sub">Gestão Jurídica</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">Principal</div>
+
+    <div class="nav-item active" onclick="navigate('dashboard', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="navigate('casos', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-2.18c.07-.44.18-.88.18-1a3 3 0 0 0-6 0c0 .12.11.56.18 1H10c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-7-1a1 1 0 1 1 2 0c0 .22-.13.67-.2 1h-1.6c-.07-.33-.2-.78-.2-1zm7 15H10V8h10v12z"/></svg>
+      Casos
+      <span class="nav-badge" id="nb-casos">8</span>
+    </div>
+    <div class="nav-item" onclick="navigate('tarefas', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+      Tarefas
+      <span class="nav-badge" id="nb-tarefas">5</span>
+    </div>
+    <div class="nav-item" onclick="navigate('clientes', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      Clientes
+    </div>
+
+    <div class="sidebar-section">Operações</div>
+
+    <div class="nav-item" onclick="navigate('agenda', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+      Agenda
+    </div>
+    <div class="nav-item" onclick="navigate('documentos', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+      Documentos
+    </div>
+    <div class="nav-item" onclick="navigate('financeiro', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+      Financeiro
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar">DS</div>
+        <div>
+          <div class="user-name">Dr. Daniel Silva</div>
+          <div class="user-role">Advogado Sênior — OAB/SP 98.432</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div id="main">
+    <!-- TOPBAR -->
+    <div id="topbar">
+      <div>
+        <div class="topbar-title" id="page-title">Dashboard</div>
+        <div class="topbar-subtitle" id="page-sub">Visão geral do escritório</div>
+      </div>
+      <div class="topbar-search" style="margin-left:auto;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Buscar casos, clientes, tarefas...">
+      </div>
+      <button class="topbar-btn" title="Notificações">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+      <button class="topbar-btn" title="Configurações" onclick="navigate('configuracoes', null)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      </button>
+    </div>
+
+    <!-- PAGES -->
+    <div id="content">
+
+      <!-- ===== DASHBOARD ===== -->
+      <div class="page active" id="page-dashboard">
+        <div class="kpi-grid">
+          <div class="kpi-card gold">
+            <div class="kpi-label">Casos Ativos</div>
+            <div class="kpi-value">23</div>
+            <div class="kpi-change"><span class="up">↑ 3</span> este mês</div>
+            <div class="kpi-icon" style="background:var(--gold)">
+              <svg viewBox="0 0 24 24" fill="var(--gold)"><path d="M20 6h-2.18c.07-.44.18-.88.18-1a3 3 0 0 0-6 0c0 .12.11.56.18 1H10c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg>
+            </div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-label">Prazos Esta Semana</div>
+            <div class="kpi-value">7</div>
+            <div class="kpi-change"><span class="down">2 urgentes</span></div>
+            <div class="kpi-icon" style="background:var(--success)">
+              <svg viewBox="0 0 24 24" fill="var(--success)"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+            </div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-label">Honorários / Mês</div>
+            <div class="kpi-value">R$48k</div>
+            <div class="kpi-change"><span class="up">↑ 12%</span> vs. anterior</div>
+            <div class="kpi-icon" style="background:var(--info)">
+              <svg viewBox="0 0 24 24" fill="var(--info)"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+            </div>
+          </div>
+          <div class="kpi-card red">
+            <div class="kpi-label">Clientes Ativos</div>
+            <div class="kpi-value">41</div>
+            <div class="kpi-change"><span class="up">↑ 2</span> novos este mês</div>
+            <div class="kpi-icon" style="background:var(--danger)">
+              <svg viewBox="0 0 24 24" fill="var(--danger)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3z"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:20px;">
+          <div class="card">
+            <div class="section-header">
+              <div class="section-title">Receita Mensal</div>
+              <span class="tag">2024</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="chartReceita"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-header">
+              <div class="section-title">Casos por Área</div>
+              <span class="tag">Ativo</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="chartAreas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="section-header">
+              <div class="section-title">Próximos Prazos</div>
+              <button class="section-action" onclick="navigate('agenda',null)">Ver agenda</button>
+            </div>
+            <div id="deadlines-list"></div>
+          </div>
+          <div class="card">
+            <div class="section-header">
+              <div class="section-title">Atividade Recente</div>
+              <button class="section-action" onclick="">Ver tudo</button>
+            </div>
+            <div class="activity-list" id="activity-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CASOS ===== -->
+      <div class="page" id="page-casos">
+        <div class="filter-bar">
+          <div class="filter-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="search-casos" placeholder="Buscar casos..." oninput="filterCasos()">
+          </div>
+          <select class="filter-select" id="filter-status-casos" onchange="filterCasos()">
+            <option value="">Todos os status</option>
+            <option value="ativo">Ativo</option>
+            <option value="aguardando">Aguardando</option>
+            <option value="encerrado">Encerrado</option>
+          </select>
+          <select class="filter-select" id="filter-area-casos" onchange="filterCasos()">
+            <option value="">Todas as áreas</option>
+            <option value="civel">Cível</option>
+            <option value="trabalhista">Trabalhista</option>
+            <option value="criminal">Criminal</option>
+            <option value="tributario">Tributário</option>
+            <option value="familia">Família</option>
+          </select>
+          <button class="btn btn-primary" onclick="openModal('modal-caso')" style="white-space:nowrap;">+ Novo Caso</button>
+        </div>
+        <div class="card" style="padding:0; overflow:hidden;">
+          <div class="table-wrap">
+            <table id="tabela-casos">
+              <thead>
+                <tr>
+                  <th>Nº Processo</th>
+                  <th>Título</th>
+                  <th>Cliente</th>
+                  <th>Área</th>
+                  <th>Status</th>
+                  <th>Prazo</th>
+                  <th>Progresso</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody-casos"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TAREFAS ===== -->
+      <div class="page" id="page-tarefas">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+          <select class="filter-select" id="filter-caso-tarefa" onchange="renderTarefas()">
+            <option value="">Todos os casos</option>
+          </select>
+          <select class="filter-select" id="filter-prio-tarefa" onchange="renderTarefas()">
+            <option value="">Todas as prioridades</option>
+            <option value="alta">Alta</option>
+            <option value="media">Média</option>
+            <option value="baixa">Baixa</option>
+          </select>
+          <button class="btn btn-primary" onclick="openModal('modal-tarefa')" style="margin-left:auto;">+ Nova Tarefa</button>
+        </div>
+        <div class="kanban-board" id="kanban-board"></div>
+      </div>
+
+      <!-- ===== CLIENTES ===== -->
+      <div class="page" id="page-clientes">
+        <div class="filter-bar">
+          <div class="filter-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="search-clientes" placeholder="Buscar clientes..." oninput="filterClientes()">
+          </div>
+          <select class="filter-select" id="filter-tipo-cliente" onchange="filterClientes()">
+            <option value="">Todos os tipos</option>
+            <option value="Pessoa Física">Pessoa Física</option>
+            <option value="Pessoa Jurídica">Pessoa Jurídica</option>
+          </select>
+          <button class="btn btn-primary" onclick="openModal('modal-cliente')">+ Novo Cliente</button>
+        </div>
+        <div class="grid-3" id="grid-clientes"></div>
+      </div>
+
+      <!-- ===== AGENDA ===== -->
+      <div class="page" id="page-agenda">
+        <div class="grid-2" style="align-items:start;">
+          <div class="card" style="padding:0; overflow:hidden;">
+            <div style="padding:20px 20px 0;">
+              <div class="cal-header">
+                <div class="cal-month" id="cal-month-label">Maio 2025</div>
+                <div class="cal-nav" style="margin-left:auto;">
+                  <div class="cal-nav-btn" onclick="changeMonth(-1)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                  </div>
+                  <div class="cal-nav-btn" onclick="changeMonth(1)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="calendar-grid" style="padding:0 12px 14px;"></div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:16px;">
+              <div class="section-header">
+                <div class="section-title">Eventos do Mês</div>
+                <button class="section-action" onclick="openModal('modal-evento')">+ Adicionar</button>
+              </div>
+              <div id="events-list"></div>
+            </div>
+            <div class="card">
+              <div class="section-header">
+                <div class="section-title">Legenda</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(224,80,80,.4); display:inline-block;"></span><span style="font-size:13px; color:var(--text2);">Audiência</span></div>
+                <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(77,168,224,.4); display:inline-block;"></span><span style="font-size:13px; color:var(--text2);">Reunião</span></div>
+                <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(230,160,48,.4); display:inline-block;"></span><span style="font-size:13px; color:var(--text2);">Prazo</span></div>
+                <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(155,127,232,.4); display:inline-block;"></span><span style="font-size:13px; color:var(--text2);">Outros</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== DOCUMENTOS ===== -->
+      <div class="page" id="page-documentos">
+        <div class="filter-bar">
+          <div class="filter-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Buscar documentos...">
+          </div>
+          <select class="filter-select">
+            <option value="">Todos os casos</option>
+          </select>
+          <button class="btn btn-primary">+ Upload</button>
+        </div>
+        <div class="grid-2">
+          <div>
+            <div class="section-header"><div class="section-title">Pastas por Caso</div></div>
+            <div id="doc-folders"></div>
+          </div>
+          <div>
+            <div class="section-header"><div class="section-title">Documentos Recentes</div></div>
+            <div id="doc-recent"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== FINANCEIRO ===== -->
+      <div class="page" id="page-financeiro">
+        <div class="fin-summary">
+          <div class="fin-card">
+            <div class="fin-label">Faturamento Total</div>
+            <div class="fin-value" style="color:var(--gold)">R$ 127.400</div>
+            <div class="fin-sub">Acumulado 2024</div>
+          </div>
+          <div class="fin-card">
+            <div class="fin-label">A Receber</div>
+            <div class="fin-value" style="color:var(--warning)">R$ 32.800</div>
+            <div class="fin-sub">6 faturas pendentes</div>
+          </div>
+          <div class="fin-card">
+            <div class="fin-label">Recebido (Mês)</div>
+            <div class="fin-value" style="color:var(--success)">R$ 48.200</div>
+            <div class="fin-sub">Maio 2024</div>
+          </div>
+          <div class="fin-card">
+            <div class="fin-label">Inadimplência</div>
+            <div class="fin-value" style="color:var(--danger)">R$ 7.600</div>
+            <div class="fin-sub">2 clientes atrasados</div>
+          </div>
+        </div>
+        <div class="grid-2" style="margin-bottom:24px;">
+          <div class="card">
+            <div class="section-header"><div class="section-title">Receita por Área (2024)</div></div>
+            <div class="chart-container"><canvas id="chartFinArea"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="section-header"><div class="section-title">Evolução Mensal</div></div>
+            <div class="chart-container"><canvas id="chartFinMensal"></canvas></div>
+          </div>
+        </div>
+        <div class="card" style="padding:0; overflow:hidden;">
+          <div style="padding:18px 20px 0; display:flex; justify-content:space-between; align-items:center;">
+            <div class="section-title">Lançamentos</div>
+            <button class="btn btn-primary" onclick="openModal('modal-lancamento')">+ Novo Lançamento</button>
+          </div>
+          <div class="table-wrap">
+            <table id="tabela-financeiro">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Descrição</th>
+                  <th>Cliente</th>
+                  <th>Caso</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody-financeiro"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CONFIGURAÇÕES ===== -->
+      <div class="page" id="page-configuracoes">
+        <div class="grid-2" style="max-width:900px;">
+          <div class="card">
+            <div class="section-title" style="margin-bottom:18px;">Perfil do Escritório</div>
+            <div class="form-group"><div class="form-label">Nome do Escritório</div><input value="Silva & Associados Advocacia"></div>
+            <div class="form-group"><div class="form-label">OAB</div><input value="98.432/SP"></div>
+            <div class="form-group"><div class="form-label">E-mail</div><input value="contato@silvaadvocacia.com.br"></div>
+            <div class="form-group"><div class="form-label">Telefone</div><input value="(11) 99999-8888"></div>
+            <div class="form-group"><div class="form-label">Endereço</div><input value="Av. Paulista, 1000 — Bela Vista, SP"></div>
+            <button class="btn btn-primary" onclick="showToast('Configurações salvas!')">Salvar alterações</button>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:16px;">
+              <div class="section-title" style="margin-bottom:16px;">Notificações</div>
+              <div style="display:flex; flex-direction:column; gap:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div><div style="font-size:13.5px;">Prazos processuais</div><div style="font-size:12px; color:var(--text3);">Alerta 3 dias antes</div></div>
+                  <label style="position:relative; width:40px; height:22px; cursor:pointer;">
+                    <input type="checkbox" checked style="display:none">
+                    <span style="position:absolute; inset:0; background:var(--gold); border-radius:11px; transition:.3s;"></span>
+                    <span style="position:absolute; left:3px; top:3px; width:16px; height:16px; background:#fff; border-radius:50%; transition:.3s;"></span>
+                  </label>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div><div style="font-size:13.5px;">Audiências</div><div style="font-size:12px; color:var(--text3);">Lembrete 1 dia antes</div></div>
+                  <label style="position:relative; width:40px; height:22px; cursor:pointer;">
+                    <input type="checkbox" checked style="display:none">
+                    <span style="position:absolute; inset:0; background:var(--gold); border-radius:11px; transition:.3s;"></span>
+                    <span style="position:absolute; left:3px; top:3px; width:16px; height:16px; background:#fff; border-radius:50%; transition:.3s;"></span>
+                  </label>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div><div style="font-size:13.5px;">Novos documentos</div><div style="font-size:12px; color:var(--text3);">Ao fazer upload</div></div>
+                  <label style="position:relative; width:40px; height:22px; cursor:pointer;">
+                    <input type="checkbox" style="display:none">
+                    <span style="position:absolute; inset:0; background:var(--card2); border:1px solid var(--border2); border-radius:11px; transition:.3s;"></span>
+                    <span style="position:absolute; left:3px; top:3px; width:16px; height:16px; background:var(--text3); border-radius:50%; transition:.3s;"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-title" style="margin-bottom:16px;">Segurança</div>
+              <div class="form-group"><div class="form-label">Senha atual</div><input type="password" placeholder="••••••••"></div>
+              <div class="form-group"><div class="form-label">Nova senha</div><input type="password" placeholder="••••••••"></div>
+              <button class="btn btn-ghost">Alterar senha</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ===== MODALS ===== -->
+
+<!-- Modal Caso -->
+<div class="modal-overlay" id="modal-caso">
+  <div class="modal">
+    <div class="modal-title">Novo Caso</div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><div class="form-label">Nº Processo</div><input id="nc-num" placeholder="0000000-00.0000.0.00.0000"></div>
+      <div class="form-group" style="margin:0"><div class="form-label">Área</div>
+        <select id="nc-area"><option value="civel">Cível</option><option value="trabalhista">Trabalhista</option><option value="criminal">Criminal</option><option value="tributario">Tributário</option><option value="familia">Família</option></select>
+      </div>
+    </div>
+    <div class="form-group"><div class="form-label">Título do Caso</div><input id="nc-titulo" placeholder="Ex: Ação de Indenização por Danos Morais"></div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><div class="form-label">Cliente</div>
+        <select id="nc-cliente"><option>Selecione...</option></select>
+      </div>
+      <div class="form-group" style="margin:0"><div class="form-label">Status</div>
+        <select id="nc-status"><option value="ativo">Ativo</option><option value="aguardando">Aguardando</option><option value="encerrado">Encerrado</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><div class="form-label">Prazo</div><input id="nc-prazo" type="date"></div>
+      <div class="form-group" style="margin:0"><div class="form-label">Honorários (R$)</div><input id="nc-honorario" type="number" placeholder="0,00"></div>
+    </div>
+    <div class="form-group"><div class="form-label">Observações</div><textarea id="nc-obs" rows="3" placeholder="Detalhes relevantes do caso..."></textarea></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-caso')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addCaso()">Criar Caso</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Tarefa -->
+<div class="modal-overlay" id="modal-tarefa">
+  <div class="modal">
+    <div class="modal-title">Nova Tarefa</div>
+    <div class="form-group"><div class="form-label">Título</div><input id="nt-titulo" placeholder="Ex: Elaborar petição inicial"></div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><div class="form-label">Caso vinculado</div>
+        <select id="nt-caso"><option>Selecione...</option></select>
+      </div>
+      <div class="form-group" style="margin:0"><div class="form-label">Prioridade</div>
+        <select id="nt-prio"><option value="alta">Alta</option><option value="media" selected>Média</option><option value="baixa">Baixa</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><div class="form-label">Status</div>
+        <select id="nt-status"><option value="fazer">A Fazer</option><option value="andamento">Em Andamento</option><option value="concluida">Concluída</option></select>
+      </div>
+      <div class="form-group" style="margin:0"><div class="form-label">Prazo</div><input id="nt-prazo" type="date"></div>
+    </div>
+    <div class="form-group"><div class="form-label">Responsável</div><input id="nt-resp" placeholder="Nome do responsável"></div>
+    <div class="form-group"><div class="form-label">Descrição</div><textarea id="nt-desc" rows="3" placeholder="Detalhes da tarefa..."></textarea></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-tarefa')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addTarefa()">Criar Tarefa</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Cliente -->
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal">
+    <div class="modal-title">Novo Cliente</div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><div class="form-label">Nome / Razão Social</div><input id="ncl-nome" placeholder="Nome completo"></div>
+      <div class="form-group" style="margin:0"><div class="form-label">Tipo</div>
+        <select id="ncl-tipo"><option>Pessoa Física</option><option>Pessoa Jurídica</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><div class="form-label">CPF / CNPJ</div><input id="ncl-doc" placeholder="000.000.000-00"></div>
+      <div class="form-group" style="margin:0"><div class="form-label">E-mail</div><input id="ncl-email" type="email" placeholder="email@exemplo.com"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><div class="form-label">Telefone</div><input id="ncl-tel" placeholder="(00) 00000-0000"></div>
+      <div class="form-group" style="margin:0"><div class="form-label">Cidade / UF</div><input id="ncl-cidade" placeholder="São Paulo, SP"></div>
+    </div>
+    <div class="form-group"><div class="form-label">Observações</div><textarea id="ncl-obs" rows="2" placeholder="Notas sobre o cliente..."></textarea></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-cliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addCliente()">Cadastrar Cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Evento -->
+<div class="modal-overlay" id="modal-evento">
+  <div class="modal">
+    <div class="modal-title">Novo Evento</div>
+    <div class="form-group"><div class="form-label">Título</div><input id="ne-titulo" placeholder="Ex: Audiência de instrução"></div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><div class="form-label">Tipo</div>
+        <select id="ne-tipo"><option value="audiencia">Audiência</option><option value="reuniao">Reunião</option><option value="prazo">Prazo</option><option value="outros">Outros</option></select>
+      </div>
+      <div class="form-group" style="margin:0"><div class="form-label">Data</div><input id="ne-data" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><div class="form-label">Hora</div><input id="ne-hora" type="time"></div>
+      <div class="form-group" style="margin:0"><div class="form-label">Local</div><input id="ne-local" placeholder="Ex: Fórum Central"></div>
+    </div>
+    <div class="form-group"><div class="form-label">Caso vinculado</div>
+      <select id="ne-caso"><option>Selecione...</option></select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-evento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addEvento()">Salvar Evento</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Lançamento -->
+<div class="modal-overlay" id="modal-lancamento">
+  <div class="modal">
+    <div class="modal-title">Novo Lançamento</div>
+    <div class="form-group"><div class="form-label">Descrição</div><input id="nl-desc" placeholder="Ex: Honorários contratuais — Fase inicial"></div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><div class="form-label">Cliente</div>
+        <select id="nl-cliente"><option>Selecione...</option></select>
+      </div>
+      <div class="form-group" style="margin:0"><div class="form-label">Caso</div>
+        <select id="nl-caso"><option>Selecione...</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><div class="form-label">Valor (R$)</div><input id="nl-valor" type="number" placeholder="0,00"></div>
+      <div class="form-group" style="margin:0"><div class="form-label">Data</div><input id="nl-data" type="date"></div>
+    </div>
+    <div class="form-group"><div class="form-label">Status</div>
+      <select id="nl-status"><option value="pago">Pago</option><option value="pendente">Pendente</option><option value="atrasado">Atrasado</option></select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-lancamento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addLancamento()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ===== DATA =====
+let clientes = [
+  { id:1, nome:"Construtora Albuquerque S/A", tipo:"Pessoa Jurídica", email:"juridico@albuquerque.com.br", tel:"(11) 3322-1100", cidade:"São Paulo, SP", casos:4, honorarios:28500 },
+  { id:2, nome:"Roberto Medeiros Filho", tipo:"Pessoa Física", email:"roberto.medeiros@gmail.com", tel:"(11) 99887-6543", cidade:"São Paulo, SP", casos:2, honorarios:9800 },
+  { id:3, nome:"Farmácias Nordeste LTDA", tipo:"Pessoa Jurídica", email:"adm@farmanordeste.com.br", tel:"(84) 3211-4400", cidade:"Natal, RN", casos:3, honorarios:42000 },
+  { id:4, nome:"Carla Simões Pinto", tipo:"Pessoa Física", email:"carla.simoes@hotmail.com", tel:"(21) 98765-4321", cidade:"Rio de Janeiro, RJ", casos:1, honorarios:6500 },
+  { id:5, nome:"TechVentures Brasil", tipo:"Pessoa Jurídica", email:"legal@techventures.com.br", tel:"(11) 94567-8900", cidade:"São Paulo, SP", casos:3, honorarios:55000 },
+  { id:6, nome:"José Augusto Cavalcanti", tipo:"Pessoa Física", email:"jagcavalcanti@uol.com.br", tel:"(85) 99321-7654", cidade:"Fortaleza, CE", casos:1, honorarios:4200 }
+];
+
+let casos = [
+  { id:1, num:"1234567-89.2023.8.26.0001", titulo:"Ação de Indenização — Danos Morais", cliente:"Construtora Albuquerque S/A", area:"civel", status:"ativo", prazo:"2024-06-15", honorario:18000, progresso:65, obs:"" },
+  { id:2, num:"9876543-21.2023.5.02.0001", titulo:"Reclamação Trabalhista — Rescisão Indireta", cliente:"Roberto Medeiros Filho", area:"trabalhista", status:"ativo", prazo:"2024-05-28", honorario:9800, progresso:40, obs:"" },
+  { id:3, num:"1111111-22.2024.4.03.6100", titulo:"Impugnação ao Auto de Infração ICMS", cliente:"Farmácias Nordeste LTDA", area:"tributario", status:"aguardando", prazo:"2024-07-10", honorario:22000, progresso:20, obs:"" },
+  { id:4, num:"2222222-33.2023.8.26.0068", titulo:"Separação Consensual — Divisão de Bens", cliente:"Carla Simões Pinto", area:"familia", status:"ativo", prazo:"2024-06-01", honorario:6500, progresso:80, obs:"" },
+  { id:5, num:"3333333-44.2022.8.26.0100", titulo:"Execução Fiscal — Dívida Ativa", cliente:"TechVentures Brasil", area:"tributario", status:"ativo", prazo:"2024-08-20", honorario:30000, progresso:55, obs:"" },
+  { id:6, num:"4444444-55.2024.5.15.0001", titulo:"Ação de Cobrança — Contrato de Prestação", cliente:"Construtora Albuquerque S/A", area:"civel", status:"ativo", prazo:"2024-05-30", honorario:10500, progresso:30, obs:"" },
+  { id:7, num:"5555555-66.2021.8.26.0001", titulo:"Revisão Contratual — Financiamento Imobiliário", cliente:"José Augusto Cavalcanti", area:"civel", status:"encerrado", prazo:"2024-01-10", honorario:4200, progresso:100, obs:"" },
+  { id:8, num:"6666666-77.2023.8.26.0050", titulo:"Crime de Estelionato — Defesa", cliente:"TechVentures Brasil", area:"criminal", status:"ativo", prazo:"2024-06-22", honorario:25000, progresso:50, obs:"" },
+];
+
+let tarefas = [
+  { id:1, titulo:"Elaborar petição inicial — danos morais", caso:"Ação de Indenização — Danos Morais", prio:"alta", status:"fazer", prazo:"2024-05-25", resp:"Dr. Daniel Silva", desc:"" },
+  { id:2, titulo:"Juntar documentos médicos ao processo", caso:"Ação de Indenização — Danos Morais", prio:"media", status:"fazer", prazo:"2024-05-27", resp:"Ana Assistente", desc:"" },
+  { id:3, titulo:"Agendar perícia contábil", caso:"Impugnação ao Auto de Infração ICMS", prio:"alta", status:"andamento", prazo:"2024-05-22", resp:"Dr. Daniel Silva", desc:"" },
+  { id:4, titulo:"Revisar minuta de separação", caso:"Separação Consensual — Divisão de Bens", prio:"media", status:"andamento", prazo:"2024-05-24", resp:"Dr. Daniel Silva", desc:"" },
+  { id:5, titulo:"Protocolar defesa prévia — estelionato", caso:"Crime de Estelionato — Defesa", prio:"alta", status:"andamento", prazo:"2024-05-23", resp:"Dr. Daniel Silva", desc:"" },
+  { id:6, titulo:"Enviar proposta de acordo ao reclamante", caso:"Reclamação Trabalhista — Rescisão Indireta", prio:"media", status:"fazer", prazo:"2024-05-30", resp:"Ana Assistente", desc:"" },
+  { id:7, titulo:"Arquivar documentos físicos do processo encerrado", caso:"Revisão Contratual — Financiamento Imobiliário", prio:"baixa", status:"concluida", prazo:"2024-05-10", resp:"Ana Assistente", desc:"" },
+  { id:8, titulo:"Intimar testemunhas para audiência", caso:"Ação de Cobrança — Contrato de Prestação", prio:"alta", status:"concluida", prazo:"2024-05-18", resp:"Dr. Daniel Silva", desc:"" },
+  { id:9, titulo:"Atualizar controle de prazos no sistema", caso:"", prio:"baixa", status:"fazer", prazo:"2024-05-31", resp:"Ana Assistente", desc:"" },
+];
+
+let eventos = [
+  { id:1, titulo:"Audiência de Instrução", tipo:"audiencia", data:"2024-05-06", hora:"14:00", local:"1ª Vara Cível — TJSP", caso:"Ação de Indenização — Danos Morais" },
+  { id:2, titulo:"Reunião com cliente — TechVentures", tipo:"reuniao", data:"2024-05-08", hora:"10:00", local:"Escritório", caso:"Execução Fiscal — Dívida Ativa" },
+  { id:3, titulo:"Prazo: Impugnação ICMS", tipo:"prazo", data:"2024-05-10", hora:"", local:"TRF3", caso:"Impugnação ao Auto de Infração ICMS" },
+  { id:4, titulo:"Audiência de Conciliação", tipo:"audiencia", data:"2024-05-14", hora:"09:30", local:"2ª Vara do Trabalho", caso:"Reclamação Trabalhista — Rescisão Indireta" },
+  { id:5, titulo:"Prazo: Defesa prévia penal", tipo:"prazo", data:"2024-05-23", hora:"", local:"1ª Vara Criminal", caso:"Crime de Estelionato — Defesa" },
+  { id:6, titulo:"Reunião com perito contábil", tipo:"reuniao", data:"2024-05-22", hora:"11:00", local:"Online", caso:"Impugnação ao Auto de Infração ICMS" },
+  { id:7, titulo:"Audiência final — Família", tipo:"audiencia", data:"2024-05-28", hora:"15:00", local:"Vara de Família", caso:"Separação Consensual — Divisão de Bens" },
+  { id:8, titulo:"Prazo: Petição ação cobrança", tipo:"prazo", data:"2024-05-30", hora:"", local:"TJSP", caso:"Ação de Cobrança — Contrato de Prestação" },
+];
+
+let lancamentos = [
+  { id:1, desc:"Honorários iniciais — Execução Fiscal", cliente:"TechVentures Brasil", caso:"Execução Fiscal — Dívida Ativa", valor:15000, data:"2024-04-01", status:"pago" },
+  { id:2, desc:"Honorários contratuais — Indenização", cliente:"Construtora Albuquerque S/A", caso:"Ação de Indenização — Danos Morais", valor:9000, data:"2024-04-05", status:"pago" },
+  { id:3, desc:"Parcela 1/3 — Impugnação ICMS", cliente:"Farmácias Nordeste LTDA", caso:"Impugnação ao Auto de Infração ICMS", valor:7333, data:"2024-04-10", status:"pago" },
+  { id:4, desc:"Honorários — Defesa penal", cliente:"TechVentures Brasil", caso:"Crime de Estelionato — Defesa", valor:12500, data:"2024-04-15", status:"pago" },
+  { id:5, desc:"Parcela 1/2 — Família", cliente:"Carla Simões Pinto", caso:"Separação Consensual — Divisão de Bens", valor:3250, data:"2024-04-20", status:"pendente" },
+  { id:6, desc:"Honorários trabalhistas", cliente:"Roberto Medeiros Filho", caso:"Reclamação Trabalhista — Rescisão Indireta", valor:4900, data:"2024-05-01", status:"pendente" },
+  { id:7, desc:"Parcela 2/2 — Família", cliente:"Carla Simões Pinto", caso:"Separação Consensual — Divisão de Bens", valor:3250, data:"2024-05-20", status:"pendente" },
+  { id:8, desc:"Honorários — Ação de Cobrança", cliente:"Construtora Albuquerque S/A", caso:"Ação de Cobrança — Contrato de Prestação", valor:5250, data:"2024-03-15", status:"atrasado" },
+  { id:9, desc:"Parcela 2/3 — Impugnação ICMS", cliente:"Farmácias Nordeste LTDA", caso:"Impugnação ao Auto de Infração ICMS", valor:7333, data:"2024-05-10", status:"pendente" },
+  { id:10, desc:"Honorários — Investigação criminal", cliente:"TechVentures Brasil", caso:"Crime de Estelionato — Defesa", valor:2350, data:"2024-03-01", status:"atrasado" },
+];
+
+let calCurrentDate = new Date(2024, 4, 1); // Maio 2024
+
+// ===== NAVIGATION =====
+const pageTitles = {
+  dashboard: ["Dashboard","Visão geral do escritório"],
+  casos: ["Casos","Gestão de processos"],
+  tarefas: ["Tarefas","Painel de atividades"],
+  clientes: ["Clientes","Carteira de clientes"],
+  agenda: ["Agenda","Calendário e compromissos"],
+  documentos: ["Documentos","Gestão documental"],
+  financeiro: ["Financeiro","Honorários e faturamento"],
+  configuracoes: ["Configurações","Perfil e preferências"]
+};
+
+function navigate(page, elem) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if (elem) elem.classList.add('active');
+  const [title, sub] = pageTitles[page] || [page, ''];
+  document.getElementById('page-title').textContent = title;
+  document.getElementById('page-sub').textContent = sub;
+}
+
+// ===== MODAL =====
+function openModal(id) {
+  // Populate selects
+  const clienteSels = document.querySelectorAll('[id^="nc-cliente"],[id^="nt-caso"],[id^="ne-caso"],[id^="nl-cliente"],[id^="nl-caso"],[id^="filter-caso-tarefa"]');
+  document.querySelectorAll('#nc-cliente, #nl-cliente').forEach(sel => {
+    sel.innerHTML = '<option>Selecione...</option>' + clientes.map(c => `<option>${c.nome}</option>`).join('');
+  });
+  document.querySelectorAll('#nt-caso, #ne-caso, #nl-caso').forEach(sel => {
+    sel.innerHTML = '<option>Selecione...</option>' + casos.map(c => `<option>${c.titulo}</option>`).join('');
+  });
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+});
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+// ===== COLORS =====
+const areaColors = { civel:'var(--info)', trabalhista:'var(--purple)', criminal:'var(--danger)', tributario:'var(--teal)', familia:'var(--warning)' };
+const areaLabels = { civel:'Cível', trabalhista:'Trabalhista', criminal:'Criminal', tributario:'Tributário', familia:'Família' };
+const statusColors = { ativo:'var(--success)', aguardando:'var(--warning)', encerrado:'var(--text3)', pendente:'var(--warning)', pago:'var(--success)', atrasado:'var(--danger)' };
+const avatarColors = [
+  ['#1a3a5c','#4da8e0'],['#1a3a2c','#2dbe7a'],['#3a1a2c','#e05095'],
+  ['#2c1a3a','#9b7fe8'],['#3a2a1a','#e0a030'],['#1a2c3a','#3dcfb0']
+];
+
+function initials(name) { return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+function avatarStyle(i) { const [bg,c] = avatarColors[i % avatarColors.length]; return `background:${bg}; color:${c};`; }
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  // Deadlines
+  const dl = document.getElementById('deadlines-list');
+  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const sorted = [...casos].filter(c=>c.status!=='encerrado' && c.prazo).sort((a,b)=>a.prazo.localeCompare(b.prazo)).slice(0,6);
+  dl.innerHTML = sorted.map(c => {
+    const d = new Date(c.prazo+'T12:00:00');
+    const today = new Date(); today.setHours(12,0,0,0);
+    const diff = Math.ceil((d - today) / 86400000);
+    const color = diff <= 3 ? 'var(--danger)' : diff <= 7 ? 'var(--warning)' : 'var(--success)';
+    return `<div class="deadline-item">
+      <div class="deadline-urgency" style="background:${color}"></div>
+      <div class="deadline-date">
+        <div class="deadline-day" style="color:${color}">${d.getDate()}</div>
+        <div class="deadline-month">${months[d.getMonth()]}</div>
+      </div>
+      <div class="deadline-info">
+        <div class="deadline-name">${c.titulo}</div>
+        <div class="deadline-case">${c.cliente} · ${diff > 0 ? diff+' dias' : diff===0 ? 'Hoje' : 'Atrasado'}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Activity
+  const activities = [
+    {text:`<strong>Novo documento</strong> adicionado ao caso "Crime de Estelionato"`, time:"Há 2 horas", color:"var(--info)"},
+    {text:`<strong>Carla Simões</strong> realizou pagamento de R$3.250`, time:"Ontem, 16:30", color:"var(--success)"},
+    {text:`Status do caso <strong>Execução Fiscal</strong> atualizado para Ativo`, time:"Ontem, 10:15", color:"var(--gold)"},
+    {text:`Audiência de instrução <strong>agendada</strong> para 06/05 às 14h`, time:"22/05, 09:42", color:"var(--warning)"},
+    {text:`<strong>Roberto Medeiros</strong> cadastrado como novo cliente`, time:"21/05, 14:20", color:"var(--purple)"},
+    {text:`Tarefa <strong>"Intimar testemunhas"</strong> marcada como concluída`, time:"21/05, 11:05", color:"var(--teal)"},
+  ];
+  document.getElementById('activity-list').innerHTML = activities.map(a => `
+    <div class="activity-item">
+      <div class="activity-dot" style="background:${a.color}"></div>
+      <div><div class="activity-text">${a.text}</div><div class="activity-time">${a.time}</div></div>
+    </div>`).join('');
+}
+
+// ===== CHARTS =====
+function renderCharts() {
+  const gridColor = 'rgba(255,255,255,0.04)';
+  const textColor = '#8A8A9A';
+
+  // Receita
+  new Chart(document.getElementById('chartReceita'), {
+    type: 'bar',
+    data: {
+      labels: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
+      datasets: [{
+        data: [32000,28000,41000,35000,48000,44000,52000,39000,46000,55000,48000,61000],
+        backgroundColor: 'rgba(201,164,85,0.25)',
+        borderColor: 'rgba(201,164,85,0.8)',
+        borderWidth: 1.5,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
+        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 }, callback: v => 'R$'+(v/1000)+'k' } }
+      }
+    }
+  });
+
+  // Áreas
+  new Chart(document.getElementById('chartAreas'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Cível','Trabalhista','Tributário','Criminal','Família'],
+      datasets: [{ data: [9,4,5,3,2], backgroundColor: ['#4DA8E0','#9B7FE8','#3DCFB0','#E05050','#E6A030'], borderWidth: 0, hoverOffset: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position:'right', labels:{ color:textColor, font:{size:11}, padding: 12, boxWidth: 10 } }
+      },
+      cutout: '68%'
+    }
+  });
+
+  // Fin área
+  new Chart(document.getElementById('chartFinArea'), {
+    type: 'bar',
+    data: {
+      labels: ['Cível','Trabalhista','Tributário','Criminal','Família'],
+      datasets: [{ data: [38000,14700,52000,37500,10200], backgroundColor: ['#4DA8E030','#9B7FE830','#3DCFB030','#E0505030','#E6A03030'], borderColor: ['#4DA8E0','#9B7FE8','#3DCFB0','#E05050','#E6A030'], borderWidth: 1.5, borderRadius: 5 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid:{color:gridColor}, ticks:{color:textColor,font:{size:11}} }, y: { grid:{color:gridColor}, ticks:{color:textColor,font:{size:11}, callback:v=>'R$'+(v/1000)+'k'} } }
+    }
+  });
+
+  // Fin mensal
+  new Chart(document.getElementById('chartFinMensal'), {
+    type: 'line',
+    data: {
+      labels: ['Jan','Fev','Mar','Abr','Mai'],
+      datasets: [{
+        data: [32000,28000,41000,35000,48000],
+        borderColor: '#C9A455', borderWidth: 2, fill: true,
+        backgroundColor: 'rgba(201,164,85,0.08)', pointBackgroundColor: '#C9A455', pointRadius: 4, tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid:{color:gridColor}, ticks:{color:textColor,font:{size:11}} }, y: { grid:{color:gridColor}, ticks:{color:textColor,font:{size:11}, callback:v=>'R$'+(v/1000)+'k'} } }
+    }
+  });
+}
+
+// ===== CASOS =====
+function renderCasos(list) {
+  if (!list) list = casos;
+  const tbody = document.getElementById('tbody-casos');
+  tbody.innerHTML = list.map(c => `
+    <tr>
+      <td style="font-family:monospace;font-size:12px;color:var(--text3)">${c.num}</td>
+      <td>
+        <div style="font-weight:500;font-size:13.5px;">${c.titulo}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${c.cliente}</div>
+      </td>
+      <td>${c.cliente}</td>
+      <td><span class="badge ${c.area}">${areaLabels[c.area]||c.area}</span></td>
+      <td><span class="badge ${c.status}">${c.status.charAt(0).toUpperCase()+c.status.slice(1)}</span></td>
+      <td style="font-size:12px;color:${isPrazoUrgente(c.prazo)?'var(--danger)':'var(--text2)'}">${formatDate(c.prazo)}</td>
+      <td style="min-width:100px">
+        <div class="progress-bar"><div class="progress-fill" style="width:${c.progresso}%"></div></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px">${c.progresso}%</div>
+      </td>
+      <td>
+        <button onclick="showToast('Caso #${c.id} aberto')" style="font-size:12px;color:var(--gold);background:rgba(201,164,85,.1);border:1px solid rgba(201,164,85,.25);border-radius:6px;padding:4px 12px;">Ver</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('nb-casos').textContent = casos.filter(c=>c.status==='ativo').length;
+}
+function filterCasos() {
+  const q = document.getElementById('search-casos').value.toLowerCase();
+  const st = document.getElementById('filter-status-casos').value;
+  const ar = document.getElementById('filter-area-casos').value;
+  renderCasos(casos.filter(c => {
+    return (!q || c.titulo.toLowerCase().includes(q) || c.cliente.toLowerCase().includes(q) || c.num.includes(q))
+      && (!st || c.status===st) && (!ar || c.area===ar);
+  }));
+}
+function addCaso() {
+  const titulo = document.getElementById('nc-titulo').value.trim();
+  if (!titulo) { showToast('Preencha o título do caso!'); return; }
+  casos.push({ id: casos.length+1, num: document.getElementById('nc-num').value||'000000-00.2024.0.00.0000', titulo, cliente: document.getElementById('nc-cliente').value, area: document.getElementById('nc-area').value, status: document.getElementById('nc-status').value, prazo: document.getElementById('nc-prazo').value, honorario: parseFloat(document.getElementById('nc-honorario').value)||0, progresso:0, obs:document.getElementById('nc-obs').value });
+  closeModal('modal-caso'); renderCasos(); showToast('Caso criado com sucesso!');
+}
+
+// ===== TAREFAS =====
+function renderTarefas() {
+  const casoFiltro = document.getElementById('filter-caso-tarefa').value;
+  const prioFiltro = document.getElementById('filter-prio-tarefa').value;
+  let filtered = tarefas.filter(t => (!casoFiltro || t.caso===casoFiltro) && (!prioFiltro || t.prio===prioFiltro));
+
+  const cols = [
+    { status:'fazer', label:'A Fazer', color:'var(--text3)' },
+    { status:'andamento', label:'Em Andamento', color:'var(--info)' },
+    { status:'concluida', label:'Concluída', color:'var(--success)' }
+  ];
+  const board = document.getElementById('kanban-board');
+  board.innerHTML = cols.map(col => {
+    const items = filtered.filter(t => t.status===col.status);
+    return `<div class="kanban-col">
+      <div class="kanban-header">
+        <span style="width:8px;height:8px;border-radius:50%;background:${col.color};display:inline-block;flex-shrink:0"></span>
+        <span class="kanban-title">${col.label}</span>
+        <span class="kanban-count">${items.length}</span>
+      </div>
+      <div>
+        ${items.map(t => `
+          <div class="task-card" onclick="showToast('Tarefa: ${t.titulo.substring(0,30)}...')">
+            <div class="task-card-top">
+              <div class="priority-bar ${t.prio}"></div>
+              <div class="task-card-title">${t.titulo}</div>
+            </div>
+            <div class="task-card-meta">
+              ${t.caso ? `<span class="task-card-case">${t.caso.substring(0,28)}${t.caso.length>28?'...':''}</span>` : ''}
+              <span class="badge ${t.prio}" style="margin-left:auto;">${t.prio.charAt(0).toUpperCase()+t.prio.slice(1)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+              <span style="font-size:11px;color:var(--text3);">${t.resp}</span>
+              <span class="task-card-due ${isPrazoUrgente(t.prazo)?'overdue':''}">${t.prazo ? formatDate(t.prazo) : ''}</span>
+            </div>
+          </div>`).join('')}
+        <button onclick="openModal('modal-tarefa')" style="width:100%;padding:9px;border:1px dashed var(--border2);border-radius:var(--radius);font-size:12px;color:var(--text3);transition:.18s;display:block;text-align:center;" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='none'">+ Adicionar tarefa</button>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('nb-tarefas').textContent = tarefas.filter(t=>t.status!=='concluida').length;
+
+  // fill filter
+  const sel = document.getElementById('filter-caso-tarefa');
+  if (sel.children.length <= 1) {
+    casos.forEach(c => { const o=document.createElement('option'); o.textContent=c.titulo; sel.appendChild(o); });
+  }
+}
+function addTarefa() {
+  const titulo = document.getElementById('nt-titulo').value.trim();
+  if (!titulo) { showToast('Preencha o título!'); return; }
+  tarefas.push({ id:tarefas.length+1, titulo, caso:document.getElementById('nt-caso').value, prio:document.getElementById('nt-prio').value, status:document.getElementById('nt-status').value, prazo:document.getElementById('nt-prazo').value, resp:document.getElementById('nt-resp').value||'Dr. Daniel Silva', desc:document.getElementById('nt-desc').value });
+  closeModal('modal-tarefa'); renderTarefas(); showToast('Tarefa criada!');
+}
+
+// ===== CLIENTES =====
+function renderClientes(list) {
+  if (!list) list = clientes;
+  document.getElementById('grid-clientes').innerHTML = list.map((c,i) => `
+    <div class="client-card" onclick="showToast('Cliente: ${c.nome}')">
+      <div class="client-header">
+        <div class="avatar" style="width:44px;height:44px;font-size:16px;${avatarStyle(i)}">${initials(c.nome)}</div>
+        <div>
+          <div class="client-name">${c.nome}</div>
+          <div class="client-type">${c.tipo}</div>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="client-contact"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>${c.email}</div>
+        <div class="client-contact"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>${c.tel}</div>
+        <div class="client-contact"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>${c.cidade}</div>
+      </div>
+      <div class="client-stats">
+        <div class="client-stat">
+          <div class="client-stat-label">Casos</div>
+          <div class="client-stat-value">${c.casos}</div>
+        </div>
+        <div class="client-stat">
+          <div class="client-stat-label">Honorários</div>
+          <div class="client-stat-value" style="font-size:16px;">R$${(c.honorarios/1000).toFixed(0)}k</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function filterClientes() {
+  const q = document.getElementById('search-clientes').value.toLowerCase();
+  const tipo = document.getElementById('filter-tipo-cliente').value;
+  renderClientes(clientes.filter(c => (!q || c.nome.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)) && (!tipo || c.tipo===tipo)));
+}
+function addCliente() {
+  const nome = document.getElementById('ncl-nome').value.trim();
+  if (!nome) { showToast('Preencha o nome!'); return; }
+  clientes.push({ id:clientes.length+1, nome, tipo:document.getElementById('ncl-tipo').value, email:document.getElementById('ncl-email').value, tel:document.getElementById('ncl-tel').value, cidade:document.getElementById('ncl-cidade').value, casos:0, honorarios:0 });
+  closeModal('modal-cliente'); renderClientes(); showToast('Cliente cadastrado!');
+}
+
+// ===== AGENDA =====
+function renderCalendar() {
+  const y = calCurrentDate.getFullYear(), m = calCurrentDate.getMonth();
+  const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('cal-month-label').textContent = monthNames[m]+' '+y;
+
+  const firstDay = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const daysInPrev = new Date(y, m, 0).getDate();
+  const today = new Date();
+
+  let html = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d => `<div class="cal-day-name">${d}</div>`).join('');
+
+  for (let i=0; i<firstDay; i++) {
+    html += `<div class="cal-day other-month"><div class="cal-day-num">${daysInPrev-firstDay+i+1}</div></div>`;
+  }
+  for (let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = today.getDate()===d && today.getMonth()===m && today.getFullYear()===y;
+    const dayEvents = eventos.filter(e=>e.data===dateStr);
+    html += `<div class="cal-day${isToday?' today':''}">
+      <div class="cal-day-num">${d}</div>
+      ${dayEvents.slice(0,2).map(e=>`<div class="cal-event ${e.tipo}">${e.titulo}</div>`).join('')}
+      ${dayEvents.length>2 ? `<div style="font-size:10px;color:var(--text3);">+${dayEvents.length-2} mais</div>` : ''}
+    </div>`;
+  }
+  const remaining = 42 - firstDay - daysInMonth;
+  for (let i=1; i<=remaining; i++) {
+    html += `<div class="cal-day other-month"><div class="cal-day-num">${i}</div></div>`;
+  }
+
+  const grid = document.getElementById('calendar-grid');
+  grid.innerHTML = '<div class="cal-grid">'+html+'</div>';
+
+  // events list
+  const evMonthEvents = eventos.filter(e => {
+    const d=new Date(e.data+'T12:00:00');
+    return d.getMonth()===m && d.getFullYear()===y;
+  }).sort((a,b)=>a.data.localeCompare(b.data));
+
+  const tipoLabel = { audiencia:'Audiência', reuniao:'Reunião', prazo:'Prazo', outros:'Outros' };
+  const tipoIcon = { audiencia:'🔴', reuniao:'🔵', prazo:'🟡', outros:'🟣' };
+
+  document.getElementById('events-list').innerHTML = evMonthEvents.length ? evMonthEvents.map(e => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="width:36px;text-align:center;flex-shrink:0;">
+        <div style="font-family:var(--font-serif);font-size:20px;font-weight:700;line-height:1;">${new Date(e.data+'T12:00:00').getDate()}</div>
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;">${['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][new Date(e.data+'T12:00:00').getMonth()]}</div>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;">${e.titulo}</div>
+        <div style="font-size:11px;color:var(--text3);">${e.hora ? e.hora+' · ' : ''}${e.local}</div>
+      </div>
+      <span class="badge ${e.tipo}">${tipoLabel[e.tipo]}</span>
+    </div>`).join('') : '<div style="color:var(--text3);font-size:13px;text-align:center;padding:24px 0;">Nenhum evento neste mês</div>';
+}
+function changeMonth(dir) {
+  calCurrentDate.setMonth(calCurrentDate.getMonth() + dir);
+  renderCalendar();
+}
+function addEvento() {
+  const titulo = document.getElementById('ne-titulo').value.trim();
+  if (!titulo) { showToast('Preencha o título!'); return; }
+  eventos.push({ id:eventos.length+1, titulo, tipo:document.getElementById('ne-tipo').value, data:document.getElementById('ne-data').value, hora:document.getElementById('ne-hora').value, local:document.getElementById('ne-local').value, caso:document.getElementById('ne-caso').value });
+  closeModal('modal-evento'); renderCalendar(); showToast('Evento adicionado!');
+}
+
+// ===== DOCUMENTOS =====
+function renderDocumentos() {
+  const folders = [
+    { nome:"Ação de Indenização — Danos Morais", docs:8, size:"24,3 MB", color:"var(--info)" },
+    { nome:"Impugnação ao Auto de Infração ICMS", docs:12, size:"41,7 MB", color:"var(--teal)" },
+    { nome:"Crime de Estelionato — Defesa", docs:6, size:"18,2 MB", color:"var(--danger)" },
+    { nome:"Separação Consensual — Divisão de Bens", docs:4, size:"9,8 MB", color:"var(--warning)" },
+    { nome:"Reclamação Trabalhista", docs:7, size:"22,1 MB", color:"var(--purple)" },
+  ];
+  document.getElementById('doc-folders').innerHTML = folders.map(f => `
+    <div class="doc-folder">
+      <div class="doc-icon" style="background:${f.color}20">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="${f.color}"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div class="doc-name">${f.nome.substring(0,36)}${f.nome.length>36?'...':''}</div>
+        <div class="doc-meta">${f.docs} documentos</div>
+      </div>
+      <div class="doc-size">${f.size}</div>
+    </div>`).join('');
+
+  const recent = [
+    { nome:"Petição_Inicial_Danos_Morais.pdf", caso:"Danos Morais", data:"22/05/2024", size:"2,1 MB", type:"pdf", color:"#E05050" },
+    { nome:"Laudo_Pericial_ICMS.docx", caso:"Impugnação ICMS", data:"20/05/2024", size:"856 KB", type:"doc", color:"var(--info)" },
+    { nome:"Contrato_Honorários_TechVentures.pdf", caso:"Execução Fiscal", data:"18/05/2024", size:"412 KB", type:"pdf", color:"#E05050" },
+    { nome:"Ata_Audiencia_Conciliação.pdf", caso:"Reclamação Trabalhista", data:"14/05/2024", size:"298 KB", type:"pdf", color:"#E05050" },
+    { nome:"Fotos_Documentadas_Prova.zip", caso:"Crime de Estelionato", data:"12/05/2024", size:"18,4 MB", type:"zip", color:"var(--warning)" },
+    { nome:"Minuta_Acordo_Família.docx", caso:"Separação Consensual", data:"10/05/2024", size:"124 KB", type:"doc", color:"var(--info)" },
+  ];
+  document.getElementById('doc-recent').innerHTML = recent.map(f => `
+    <div class="doc-folder">
+      <div class="doc-icon" style="background:${f.color}20">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="${f.color}"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div class="doc-name" style="font-size:12.5px;">${f.nome}</div>
+        <div class="doc-meta">${f.caso} · ${f.data}</div>
+      </div>
+      <div class="doc-size">${f.size}</div>
+    </div>`).join('');
+}
+
+// ===== FINANCEIRO =====
+function renderFinanceiro() {
+  document.getElementById('tbody-financeiro').innerHTML = lancamentos.map(l => `
+    <tr>
+      <td style="font-size:12.5px;">${formatDate(l.data)}</td>
+      <td><div style="font-weight:500;">${l.desc}</div></td>
+      <td style="font-size:13px;color:var(--text2);">${l.cliente}</td>
+      <td style="font-size:12px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.caso}</td>
+      <td style="font-weight:600;font-family:var(--font-serif);font-size:15px;color:${l.status==='pago'?'var(--success)':l.status==='atrasado'?'var(--danger)':'var(--text)'};">R$ ${l.valor.toLocaleString('pt-BR')}</td>
+      <td><span class="badge ${l.status}">${l.status.charAt(0).toUpperCase()+l.status.slice(1)}</span></td>
+      <td><button onclick="showToast('Lançamento #${l.id}')" style="font-size:12px;color:var(--gold);background:rgba(201,164,85,.1);border:1px solid rgba(201,164,85,.25);border-radius:6px;padding:4px 12px;">Ver</button></td>
+    </tr>`).join('');
+}
+function addLancamento() {
+  const desc = document.getElementById('nl-desc').value.trim();
+  if (!desc) { showToast('Preencha a descrição!'); return; }
+  lancamentos.unshift({ id:lancamentos.length+1, desc, cliente:document.getElementById('nl-cliente').value, caso:document.getElementById('nl-caso').value, valor:parseFloat(document.getElementById('nl-valor').value)||0, data:document.getElementById('nl-data').value, status:document.getElementById('nl-status').value });
+  closeModal('modal-lancamento'); renderFinanceiro(); showToast('Lançamento salvo!');
+}
+
+// ===== UTILS =====
+function formatDate(str) {
+  if (!str) return '—';
+  const [y,m,d] = str.split('-');
+  return `${d}/${m}/${y}`;
+}
+function isPrazoUrgente(str) {
+  if (!str) return false;
+  const d = new Date(str+'T12:00:00');
+  const today = new Date(); today.setHours(12,0,0,0);
+  return (d - today) <= 7 * 86400000;
+}
+
+// ===== INIT =====
+renderDashboard();
+renderCharts();
+renderCasos();
+renderTarefas();
+renderClientes();
+renderCalendar();
+renderDocumentos();
+renderFinanceiro();
+</script>
+</body>
+</html>
